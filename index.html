@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MKTPRO® — AUTHENTICATED STREETWEAR / EST. 2026</title>
+<!-- Шрифты -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Leaflet (карта) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <a href="#home" class="logo">MKTPRO<sup>®</sup></a>
+  <nav>
+    <ul id="navMenu">
+      <li><a href="#drops"><span class="num">01</span>Drops</a></li>
+      <li><a href="#auth"><span class="num">02</span>Auth</a></li>
+      <li><a href="#tradein"><span class="num">03</span>Trade-In</a></li>
+      <li><a href="#map"><span class="num">04</span>Global</a></li>
+      <li><a href="#journal"><span class="num">05</span>Journal</a></li>
+      <li><a href="#support"><span class="num">06</span>Support</a></li>
+    </ul>
+  </nav>   
+   <div class="cart-btn" onclick="openCartModal()">
+      <span class="cart-count" id="cartCount">0</span>
+    </div>
+  <div class="header-right">
+    <div class="city-selector" onclick="openCityModal()">
+      <span class="pin">◉</span>
+      <span class="city-name" id="currentCityName">МОСКВА</span>
+      <span style="color:var(--dim)">▾</span>
+    </div>
+    <div class="user-area" id="userArea">
+      <button class="btn btn-accent" onclick="openAuthModal()">ВХОД</button>
+    </div>
+    <div class="burger" onclick="document.getElementById('navMenu').classList.toggle('active')">☰</div>
+  </div>
+</header>
+
+<!-- ============ МОДАЛКА ВХОДА ============ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('authModal')">✕</button>
+    <div class="modal-header">
+      <div class="label">[ MEMBER ACCESS ]</div>
+      <h3>JOIN THE CREW</h3>
+    </div>
+    <div class="modal-body">
+      <div class="form-success" id="authSuccess"></div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">ВХОД</button>
+        <button class="auth-tab" onclick="switchTab('register')">РЕГИСТРАЦИЯ</button>
+      </div>
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">EMAIL</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PASSWORD</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+          <span class="form-error" id="loginError"></span>
+        </div>
+        <button type="submit" class="btn btn-accent" style="width:100%">ВОЙТИ →</button>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:10px">
+          Нет аккаунта? <a href="#" onclick="switchTab('register');return false" style="color:var(--accent);font-weight:700">Зарегистрируйся</a>
+        </p>
+      </form>
+      <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">ИМЯ / НИК</label>
+          <input type="text" class="form-input" id="regName" placeholder="your_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EMAIL</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PASSWORD</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="минимум 6 символов" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CONFIRM PASSWORD</label>
+          <input type="password" class="form-input" id="regPasswordConfirm" placeholder="повтори пароль" required>
+          <span class="form-error" id="registerError"></span>
+        </div>
+        <button type="submit" class="btn btn-accent" style="width:100%">СОЗДАТЬ АККАУНТ →</button>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:10px">
+          Уже в crew? <a href="#" onclick="switchTab('login');return false" style="color:var(--accent);font-weight:700">Войти</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА ПРОФИЛЯ ============ -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    <div class="modal-body">
+      <div class="profile-header">
+        <div class="profile-avatar-big" id="profileAvatar">A</div>
+        <div class="profile-info">
+          <h4 id="profileName">USER</h4>
+          <div class="email" id="profileEmail">email@example.com</div>
+          <span class="profile-badge" id="profileLevel">CREW</span>
+        </div>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="num" id="profilePoints">0</div><div class="lbl">POINTS</div></div>
+        <div class="profile-stat"><div class="num" id="profileOrders">0</div><div class="lbl">ORDERS</div></div>
+        <div class="profile-stat"><div class="num" id="profileWishlist">0</div><div class="lbl">WISHLIST</div></div>
+      </div>
+      <div class="profile-menu">
+        <button class="profile-menu-item"><span>МОИ ЗАКАЗЫ</span><span>→</span></button>
+        <button class="profile-menu-item"><span>ИЗБРАННОЕ</span><span>→</span></button>
+        <button class="profile-menu-item"><span>МОЙ ГОРОД</span><span onclick="closeModal('profileModal');openCityModal()">◉</span></button>
+        <button class="profile-menu-item"><span>НАСТРОЙКИ</span><span>→</span></button>
+        <button class="profile-menu-item danger" onclick="logout()"><span>ВЫЙТИ</span><span>✕</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============ МОДАЛКА КОРЗИНЫ ============ -->
+<div class="modal-overlay" id="cartModal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('cartModal')">✕</button>
+    <div class="modal-header">
+      <div class="label">[ YOUR CART ]</div>
+      <h3>КОРЗИНА</h3>
+    </div>
+    <div class="modal-body">
+
+      <!-- Вид 1: список товаров -->
+      <div id="cartView">
+        <div id="cartItems"></div>
+        <div class="cart-total-row">
+          <span>ИТОГО:</span>
+          <span id="cartTotal">0 ₽</span>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="showCheckout()">ОФОРМИТЬ ЗАКАЗ →</button>
+      </div>
+
+      <!-- Вид 2: форма оформления -->
+      <div id="checkoutView" style="display:none">
+        <form class="auth-form active" onsubmit="submitOrder(event)">
+          <div class="form-group">
+            <label class="form-label">ИМЯ</label>
+            <input type="text" class="form-input" id="orderName" placeholder="Как к тебе обращаться" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ТЕЛЕФОН</label>
+            <input type="tel" class="form-input" id="orderPhone" placeholder="+7 (___) ___-__-__" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ГОРОД</label>
+            <input type="text" class="form-input" id="orderCity" placeholder="Москва" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">АДРЕС ДОСТАВКИ</label>
+            <input type="text" class="form-input" id="orderAddress" placeholder="Улица, дом, квартира" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">КОММЕНТАРИЙ</label>
+            <input type="text" class="form-input" id="orderComment" placeholder="Пожелания к заказу">
+          </div>
+          <button type="submit" class="btn btn-accent" style="width:100%">ПОДТВЕРДИТЬ ЗАКАЗ →</button>
+          <button type="button" class="btn" style="width:100%;margin-top:8px" onclick="backToCart()">← ВЕРНУТЬСЯ В КОРЗИНУ</button>
+        </form>
+      </div>
+
+      <!-- Вид 3: заказ принят -->
+      <div id="orderSuccessView" style="display:none;text-align:center;padding:30px 0">
+        <div style="font-size:64px;margin-bottom:20px">✅</div>
+        <h3 style="font-family:'Anton',sans-serif;font-size:32px;margin-bottom:10px">ЗАКАЗ ПРИНЯТ!</h3>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:15px">
+          Номер заказа: <span id="orderIdSuccess" style="color:var(--success);font-weight:700"></span>
+        </p>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:25px">
+          Crew свяжется с тобой в течение часа для подтверждения.
+        </p>
+        <button class="btn btn-accent" onclick="closeModal('cartModal')">ОК, ЖДУ →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ============ МОДАЛКА ГОРОДА ============ -->
+<div class="modal-overlay" id="cityModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('cityModal')">✕</button>
+    <div class="modal-header">
+      <div class="label">[ LOCATION ]</div>
+      <h3>ВЫБЕРИ ГОРОД</h3>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="city-search" id="citySearch" placeholder="ПОИСК ГОРОДА..." oninput="filterCities()">
+      <div class="city-grid" id="cityGrid"></div>
+      <button class="city-geo-btn" onclick="detectMyCity()">⌖ ОПРЕДЕЛИТЬ МОЁ МЕСТОПОЛОЖЕНИЕ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="home">
+  <div class="hero-text">
+    <div class="hero-meta">
+      <span>EST. 2026</span>
+      <span id="heroCity">MOSCOW / RU</span>
+      <span>✓ AUTHENTICATED</span>
+    </div>
+    <h1>STREET<br><span class="stroke">WEAR</span><br><span class="accent">DROP</span></h1>
+    <p class="hero-desc">// Лимитированные коллекции. 100% оригинал с двойной аутентификацией. Trade-in, гид по размерам и доставка по всему миру через 15 хабов.</p>
+    <div class="hero-cta">
+      <a href="#drops" class="btn btn-accent">Shop Collection →</a>
+      <a href="#tradein" class="btn">Sell Your Stuff</a>
+    </div>
+  </div>
+  <div class="hero-video">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="rec-badge"><span class="live-dot"></span>REC</div>
+    <div class="cam-id">CAM-01 / 16:9</div>
+    <div class="timecode">00:00:00:00</div>
+    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+  </div>
+</section>
+
+<!-- ============ TRUST BAR ============ -->
+<div class="trust-bar">
+  <div class="trust-item"><div class="icon">✓</div><div><strong>AUTHENTICATED</strong>Dual-expert verification</div></div>
+  <div class="trust-item"><div class="icon">◉</div><div><strong id="trustCity">МОСКВА</strong><span id="trustCityLabel">Твой город</span></div></div>
+  <div class="trust-item"><div class="icon">⚡</div><div><strong>WORLDWIDE</strong>15 hubs globally</div></div>
+  <div class="trust-item"><div class="icon">↻</div><div><strong>14-DAY RETURNS</strong>No questions asked</div></div>
+</div>
+
+<!-- ============ TICKER ============ -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span>NEW DROP SS26</span><span class="dot"></span>
+    <span>100% AUTHENTIC</span><span class="dot"></span>
+    <span>TRADE-IN AVAILABLE</span><span class="dot"></span>
+    <span>OZON / WILDBERRIES</span><span class="dot"></span>
+    <span>JOIN THE CREW</span><span class="dot"></span>
+    <span>NEW DROP SS26</span><span class="dot"></span>
+    <span>100% AUTHENTIC</span><span class="dot"></span>
+    <span>TRADE-IN AVAILABLE</span><span class="dot"></span>
+    <span>OZON / WILDBERRIES</span><span class="dot"></span>
+    <span>JOIN THE CREW</span><span class="dot"></span>
+  </div>
+</div>
+
+<!-- ============ СТАТИСТИКА ============ -->
+<section class="stats">
+  <div class="stat-item"><span class="tag">[STAT.01]</span><div class="stat-num">15</div><div class="stat-label">Global hubs</div></div>
+  <div class="stat-item"><span class="tag">[STAT.02]</span><div class="stat-num">500+</div><div class="stat-label">Products in stock</div></div>
+  <div class="stat-item"><span class="tag">[STAT.03]</span><div class="stat-num">4.9<span style="color:var(--accent)">★</span></div><div class="stat-label">Seller Rating</div></div>
+  <div class="stat-item"><span class="tag">[STAT.04]</span><div class="stat-num">100%</div><div class="stat-label">Authenticity</div></div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<div class="section-header">
+  <div class="label">§ 02 — The Process</div>
+  <h2>How <span class="stroke">it</span><br>works.</h2>
+</div>
+<section class="how-grid">
+  <div class="how-step">
+    <div class="step-big-num">01</div>
+    <div class="step-icon">◎</div>
+    <h3>Pick Your Drop</h3>
+    <p>Выбираешь товар из каталога. Все вещи с замерами, фото и market value. Без фейков.</p>
+    <div class="arrow">→</div>
+  </div>
+  <div class="how-step">
+    <div class="step-big-num">02</div>
+    <div class="step-icon">✓</div>
+    <h3>Auth Verified</h3>
+    <p>Наш crew проверяет каждую вещь дважды. Получаешь цифровой сертификат и NFC-метку.</p>
+    <div class="arrow">→</div>
+  </div>
+  <div class="how-step">
+    <div class="step-big-num">03</div>
+    <div class="step-icon">⇄</div>
+    <h3>Pay Safe</h3>
+    <p>Платишь через Ozon или WildBerries — защищённая сделка, деньги под защитой.</p>
+    <div class="arrow">→</div>
+  </div>
+  <div class="how-step">
+    <div class="step-big-num">04</div>
+    <div class="step-icon">◉</div>
+    <h3>Get It Fast</h3>
+    <p>Отправляем в течение 24ч. Трекинг + страхование + возврат 14 дней без вопросов.</p>
+  </div>
+</section>
+
+<!-- ============ AUTHENTICATION ============ -->
+<div class="section-header" id="auth">
+  <div class="label">§ 03 — Trust Protocol</div>
+  <h2>100% <span class="stroke">Authentic</span><br><span class="accent">Guaranteed.</span></h2>
+</div>
+<section class="auth-section">
+  <div class="auth-inner">
+    <div class="auth-left">
+      <h2>FAKES<br>DIE <span class="check">HERE.</span></h2>
+      <p>// Каждая вещь в MKTPRO проходит 4-уровневую аутентификацию. Мы работаем только с оригиналом — с сертификатами, бирками и цифровой меткой подлинности. Если что-то не так — вернём деньги x2.</p>
+      <div class="auth-stats">
+        <div class="auth-stat"><div class="num">0%</div><div class="lbl">Fakes sold</div></div>
+        <div class="auth-stat"><div class="num">12K+</div><div class="lbl">Items verified</div></div>
+        <div class="auth-stat"><div class="num">x2</div><div class="lbl">Refund promise</div></div>
+      </div>
+    </div>
+    <div class="auth-process">
+      <div class="auth-step"><div class="step-num">01</div><div class="step-content"><h3>Sourcing</h3><p>Берём товар только у проверенных поставщиков и official drops. Каждый источник верифицирован с 2020 года.</p></div></div>
+      <div class="auth-step"><div class="step-num">02</div><div class="step-content"><h3>Dual-Expert Check</h3><p>Два независимых аутентификатора проверяют каждый item: швы, бирки, фурнитура, упаковка, QR-коды.</p></div></div>
+      <div class="auth-step"><div class="step-num">03</div><div class="step-content"><h3>Digital Certificate</h3><p>Каждая вещь получает цифровой сертификат подлинности с уникальным ID и NFC-меткой.</p></div></div>
+      <div class="auth-step"><div class="step-num">04</div><div class="step-content"><h3>Lifetime Guarantee</h3><p>Пожизненная гарантия на оригинальность. Если хоть один эксперт докажет обратное — вернём деньги x2.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<div class="section-header">
+  <div class="label">§ 04 — Manifesto</div>
+  <h2>Why <span class="stroke">we</span> hit<br>different.</h2>
+</div>
+<section class="features-grid">
+  <div class="feature-card"><div class="feature-num">[01 / 04]</div><div class="feature-icon">⚡</div><h3>Fast Drop</h3><p>Отправка в течение 24ч через Ozon / WildBerries. По всей России.</p></div>
+  <div class="feature-card"><div class="feature-num">[02 / 04]</div><div class="feature-icon">✓</div><h3>Original</h3><p>Только подлинные товары. Сертификаты. Гарантия подлинности.</p></div>
+  <div class="feature-card"><div class="feature-num">[03 / 04]</div><div class="feature-icon">◉</div><h3>24/7 Crew</h3><p>Наша команда на связи круглосуточно. Отвечаем за час.</p></div>
+  <div class="feature-card"><div class="feature-num">[04 / 04]</div><div class="feature-icon">◆</div><h3>Safe Pay</h3><p>Безопасная оплата через маркетплейсы. Возврат без вопросов.</p></div>
+</section>
+
+<!-- ============ ТОВАРЫ ============ -->
+<div class="section-header" id="drops">
+  <div class="label">§ 05 — Current Drop</div>
+  <h2>The <span class="stroke">Drop</span><br>SS/26.</h2>
+</div>
+<section class="products-section">
+  <div class="products-toolbar">
+    <div>Showing 08 / 500+ items</div>
+    <div class="filters">
+      <span class="filter active">ALL</span>
+      <span class="filter">NEW</span>
+      <span class="filter">HIT</span>
+      <span class="filter">SALE</span>
+    </div>
+  </div>
+  <div class="products-grid">
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge hit">HIT</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#001</span>
+        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500" alt="Headphones">
+      </div>
+      <div class="product-info">
+        <div class="product-category">AUDIO / TECH</div>
+        <h3>Wireless Headphones Pro Max</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 247 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">7 990₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">4 990₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">4 990₽</span>
+          <span class="price-old">7 990₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge new">NEW</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#002</span>
+        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500" alt="Sneakers">
+      </div>
+      <div class="product-info">
+        <div class="product-category">FOOTWEAR</div>
+        <h3>Air Sneakers / Urban Edition</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 182 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">9 990₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">6 490₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">6 490₽</span>
+          <span class="price-old">9 990₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge">-40%</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#003</span>
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500" alt="Watch">
+      </div>
+      <div class="product-info">
+        <div class="product-category">ACCESSORIES</div>
+        <h3>Smart Watch 7 / Limited</h3>
+        <div class="product-rating"><span class="stars">★★★★☆</span> 98 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">6 990₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">3 990₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">3 990₽</span>
+          <span class="price-old">6 990₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge hit">HIT</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#004</span>
+        <img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=500" alt="Bag">
+      </div>
+      <div class="product-info">
+        <div class="product-category">BAGS</div>
+        <h3>Leather Crossbody Bag</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 312 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">8 490₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">5 490₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">5 490₽</span>
+          <span class="price-old">8 490₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge new">NEW</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#005</span>
+        <img src="https://images.unsplash.com/photo-1526170375885-4d8fcb4535b3?w=500" alt="Perfume">
+      </div>
+      <div class="product-info">
+        <div class="product-category">BEAUTY</div>
+        <h3>Eau de Luxe / 100ml</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 156 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">4 490₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">2 990₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">2 990₽</span>
+          <span class="price-old">4 490₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge">-50%</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#006</span>
+        <img src="https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=500" alt="Sneakers">
+      </div>
+      <div class="product-info">
+        <div class="product-category">FOOTWEAR</div>
+        <h3>Urban Style Sneakers</h3>
+        <div class="product-rating"><span class="stars">★★★★☆</span> 89 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">6 990₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">3 490₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">3 490₽</span>
+          <span class="price-old">6 990₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge hit">HIT</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#007</span>
+        <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500" alt="Watch">
+      </div>
+      <div class="product-info">
+        <div class="product-category">ACCESSORIES</div>
+        <h3>Classic Wristwatch / Men</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 203 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">11 990₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">7 990₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">7 990₽</span>
+          <span class="price-old">11 990₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-image">
+        <span class="product-badge new">NEW</span>
+        <span class="product-badge auth">✓ AUTH</span>
+        <span class="product-lot">#008</span>
+        <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500" alt="Sunglasses">
+      </div>
+      <div class="product-info">
+        <div class="product-category">EYEWEAR</div>
+        <h3>Trend Sunglasses / UV400</h3>
+        <div class="product-rating"><span class="stars">★★★★★</span> 128 reviews</div>
+        <div class="price-index">
+          <div class="price-row market"><span class="lbl">MARKET</span><span class="val">3 490₽</span></div>
+          <div class="price-row you"><span class="lbl">OUR PRICE</span><span class="val">1 990₽</span></div>
+        </div>
+        <div class="product-price">
+          <span class="price-current">1 990₽</span>
+          <span class="price-old">3 490₽</span>
+        </div>
+        <div class="product-buttons">
+          <a href="https://www.ozon.ru" target="_blank" class="btn-ozon">OZON →</a>
+          <a href="https://www.wildberries.ru" target="_blank" class="btn-wb">WB →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ SIZING GUIDE ============ -->
+<div class="section-header">
+  <div class="label">§ 06 — Fit Guide</div>
+  <h2>Never <span class="stroke">miss</span><br>the fit.</h2>
+</div>
+<section class="sizing-section">
+  <div class="sizing-inner">
+    <div class="sizing-left">
+      <h3>Size Like A Pro</h3>
+      <p>// Не можешь примерить онлайн? У нас — реальные замеры каждой вещи и fit-предиктор. Задай рост и вес — скажем размер.</p>
+      <select class="sizing-select">
+        <option>ВЫБЕРИ КАТЕГОРИЮ</option>
+        <option>T-SHIRTS / HOODIES</option>
+        <option>PANTS / JEANS</option>
+        <option>SNEAKERS</option>
+        <option>OUTERWEAR</option>
+      </select>
+    </div>
+    <div class="sizing-right">
+      <div class="sizing-table-wrap">
+        <table class="sizing-table">
+          <thead>
+            <tr><th>SIZE</th><th>CHEST (CM)</th><th>LENGTH (CM)</th><th>SHOULDER (CM)</th><th>US</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>XS</td><td>96</td><td>68</td><td>42</td><td>S</td></tr>
+            <tr><td>S</td><td>102</td><td>70</td><td>44</td><td>M</td></tr>
+            <tr><td>M</td><td>108</td><td>72</td><td>46</td><td>L</td></tr>
+            <tr><td>L</td><td>114</td><td>74</td><td>48</td><td>XL</td></tr>
+            <tr><td>XL</td><td>120</td><td>76</td><td>50</td><td>XXL</td></tr>
+            <tr><td>XXL</td><td>126</td><td>78</td><td>52</td><td>3XL</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fit-predictor">
+        <h4>⚡ AI Fit Predictor</h4>
+        <p>Введи параметры — подберём размер точно под тебя.</p>
+        <div class="fit-inputs">
+          <input type="number" class="fit-input" id="fitHeight" placeholder="Рост (см)" value="180">
+          <input type="number" class="fit-input" id="fitWeight" placeholder="Вес (кг)" value="75">
+        </div>
+        <div class="fit-result" id="fitResult">✓ RECOMMENDED: SIZE M / US L — REGULAR FIT</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRADE-IN ============ -->
+<div class="section-header" id="tradein">
+  <div class="label">§ 07 — Sell To Us</div>
+  <h2>Trade <span class="stroke">in</span><br>your stuff.</h2>
+</div>
+<section class="tradein-section">
+  <div class="tradein-inner">
+    <div class="tradein-left">
+      <h2>SELL<br>YOUR<br>DROP.</h2>
+      <p>// Надоело носить? Сдай нам — получи деньги или trade-in с доплатой на новый item. Оценка за 10 минут, выкуп за 24 часа. Люксовые бренды, streetwear, limited drops.</p>
+      <div class="tradein-features">
+        <div class="tradein-feat"><span class="check">✓</span><span>Оценка за 10 минут онлайн</span></div>
+        <div class="tradein-feat"><span class="check">✓</span><span>Выкуп в течение 24 часов</span></div>
+        <div class="tradein-feat"><span class="check">✓</span><span>Trade-in + 15% к стоимости</span></div>
+        <div class="tradein-feat"><span class="check">✓</span><span>Бесплатный курьер по Москве</span></div>
+      </div>
+      <a href="#calc" class="btn btn-dark">Get Offer →</a>
+    </div>
+    <div class="tradein-calc" id="calc">
+      <h3>[ INSTANT ESTIMATOR ]</h3>
+      <form class="tradein-form" onsubmit="calcEstimate(event)">
+        <input type="text" class="tradein-input" placeholder="BRAND (e.g. Supreme, Nike, Gucci)" required>
+        <select class="tradein-input">
+          <option>CATEGORY</option>
+          <option>SNEAKERS</option>
+          <option>HOODIE / SWEATSHIRT</option>
+          <option>T-SHIRT</option>
+          <option>BAG / ACCESSORY</option>
+          <option>OUTERWEAR</option>
+        </select>
+        <select class="tradein-input">
+          <option>CONDITION</option>
+          <option>DEADSTOCK (NEW)</option>
+          <option>EXCELLENT (9/10)</option>
+          <option>GOOD (7/10)</option>
+          <option>WORN (5/10)</option>
+        </select>
+        <input type="number" class="tradein-input" placeholder="ORIGINAL PRICE (₽)" id="origPrice">
+        <div class="tradein-result">
+          <div class="label">ESTIMATED PAYOUT</div>
+          <div class="amount" id="payoutAmount">— ₽</div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ КАРТА МИРА ============ -->
+<div class="section-header" id="map">
+  <div class="label">§ 08 — Global Network</div>
+  <h2>We <span class="stroke">ship</span><br><span class="accent">worldwide.</span></h2>
+</div>
+<section class="map-section">
+  <div class="map-controls">
+    <div class="map-city-buttons" id="mapCityButtons"></div>
+    <button class="map-locate-btn" onclick="locateMe()">⌖ НАЙТИ МЕНЯ</button>
+  </div>
+  <div class="map-container"><div id="mapCanvas"></div></div>
+  <div class="map-info-bar">
+    <div>GLOBAL NETWORK / 15 HUBS ACTIVE</div>
+    <div>SELECTED: <span class="coords" id="mapSelectedCity">MOSCOW, RU</span></div>
+    <div>COORDS: <span class="coords" id="mapCoords">55.7558° N, 37.6173° E</span></div>
+  </div>
+</section>
+
+<!-- ============ ВИДЕО ============ -->
+<div class="section-header">
+  <div class="label">§ 09 — Lookbook</div>
+  <h2>Behind <span class="stroke">the</span><br>scenes.</h2>
+</div>
+<section class="videos-section">
+  <div class="videos-grid">
+    <div class="video-card">
+      <div class="video-wrapper"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe></div>
+      <div class="video-info">
+        <div class="vid-num">[VIDEO.01 / 02:45]</div>
+        <h3>Packing Process</h3>
+        <p>Как мы упаковываем каждый заказ. Каждая деталь важна — от коробки до ленты.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="video-wrapper"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe></div>
+      <div class="video-info">
+        <div class="vid-num">[VIDEO.02 / 03:12]</div>
+        <h3>Auth Process</h3>
+        <p>Как наши эксперты проверяют подлинность. Dual-expert check на каждую вещь.</p>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="video-wrapper"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe></div>
+      <div class="video-info">
+        <div class="vid-num">[VIDEO.03 / 01:58]</div>
+        <h3>Global Shipping</h3>
+        <p>Отправка на Ozon / WildBerries и международные хабы. Процесс от склада до двери.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOURNAL ============ -->
+<div class="section-header" id="journal">
+  <div class="label">§ 10 — Journal</div>
+  <h2>Latest <span class="stroke">from</span><br>the crew.</h2>
+</div>
+<section class="journal-section">
+  <div class="journal-grid">
+    <div class="journal-card featured">
+      <div class="journal-img"><img src="img/journal/journal-1.jpg" alt="Streetwear Drop Guide"> alt="Journal"></div>
+      <div class="journal-content">
+        <div class="journal-meta"><span class="tag">FEATURED</span><span>GUIDE</span><span>08 NOV 2026</span></div>
+        <h3>Streetwear Drop Guide: Как покупать limited edition и не нарваться на фейк</h3>
+        <p>Полный гид 2026 года: где искать, как проверять подлинность, когда покупать и сколько это должно стоить.</p>
+        <a href="#" class="journal-link">READ MORE →</a>
+      </div>
+    </div>
+    <div class="journal-card">
+      <div class="journal-img"><img src="img/journal/journal-2.jpg" alt="Как отличить оригинал от фейка"> alt="Journal"></div>
+      <div class="journal-content">
+        <div class="journal-meta"><span class="tag">AUTH</span><span>TUTORIAL</span></div>
+        <h3>5 признаков фейковых кроссовок</h3>
+        <p>Разбираем на примерах Nike, Yeezy и Jordan.</p>
+        <a href="#" class="journal-link">READ →</a>
+      </div>
+    </div>
+    <div class="journal-card">
+      <div class="journal-img"><img src="img/journal/journal-3.jpg" alt="Топ-10 вещей SS26"> alt="Journal"></div>
+      <div class="journal-content">
+        <div class="journal-meta"><span class="tag">TRENDS</span><span>SS26</span></div>
+        <h3>Топ-10 вещей SS26</h3>
+        <p>Что брать в этом сезоне, чтобы не выглядеть как все.</p>
+        <a href="#" class="journal-link">READ →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CREW LOOKBOOK ============ -->
+<div class="section-header">
+  <div class="label">§ 11 — Crew</div>
+  <h2>Styled <span class="stroke">by</span><br>the crew.</h2>
+</div>
+<section class="crew-section">
+  <div class="crew-grid">
+
+    <!-- Фото 1 -->
+    <div class="crew-item">
+      <img src="img/crew/crew-1.jpg" alt="Crew look 1">
+      <div class="crew-overlay"><span class="user">kate_street</span></div>
+    </div>
+
+    <!-- Фото 2 -->
+    <div class="crew-item">
+      <img src="img/crew/crew-2.jpg" alt="Crew look 2">
+      <div class="crew-overlay"><span class="user">olga.drip</span></div>
+    </div>
+
+    <!-- Фото 3 -->
+    <div class="crew-item">
+      <img src="img/crew/crew-3.jpg" alt="Crew look 3">
+      <div class="crew-overlay"><span class="user">nika_meri</span></div>
+    </div>
+
+    <!-- Фото 4 -->
+    <div class="crew-item">
+      <img src="img/crew/crew-4.jpg" alt="Crew look 4">
+      <div class="crew-overlay"><span class="user">dima.fits</span></div>
+    </div>
+
+    <!-- Фото 5 -->
+    <div class="crew-item">
+      <img src="img/crew/crew-5.jpg" alt="Crew look 5">
+      <div class="crew-overlay"><span class="user">anna.style</span></div>
+    </div>
+
+    <!-- Ячейка-призыв (6-я) -->
+    <div class="crew-item crew-join">
+      <div class="crew-join-inner">
+        <div class="crew-join-tag">#MKTPROCREW</div>
+        <div class="crew-join-text">ТВОЁ ФОТО<br>МОЖЕТ БЫТЬ<br>ЗДЕСЬ</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="crew-cta">
+    <h3>JOIN THE CREW</h3>
+    <p>Отметь нас — попадёшь в ленту</p>
+    <div class="hashtag">#MKTPROCREW</div>
+    <div><a href="#" class="btn btn-accent">Tag Us on Instagram →</a></div>
+  </div>
+</section>
+<!-- ============ ОТЗЫВЫ ============ -->
+<div class="section-header">
+  <div class="label">§ 12 — Testimonials</div>
+  <h2>What <span class="stroke">the</span><br>crew says.</h2>
+</div>
+<section class="testimonials-section">
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="t-rating">★★★★★</div>
+      <p class="t-text">"Заказала наушники — пришли быстро, качество топ. Продавец вежливый, ответил на все вопросы моментально. Буду заказывать ещё!"</p>
+      <div class="t-author">
+        <div class="t-avatar">AS</div>
+        <div class="t-info"><strong>ANNA S.</strong><span>OZON CUSTOMER</span><div class="t-verified">✓ VERIFIED PURCHASE</div></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="t-rating">★★★★★</div>
+      <p class="t-text">"Отличный магазин! Купил часы жене на день рождения — она в восторге. Упаковка подарочная, всё идеально. Рекомендую crew."</p>
+      <div class="t-author">
+        <div class="t-avatar">DP</div>
+        <div class="t-info"><strong>DMITRY P.</strong><span>WB CUSTOMER</span><div class="t-verified">✓ VERIFIED PURCHASE</div></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="t-rating">★★★★★</div>
+      <p class="t-text">"Быстрая доставка, оригинальные товары, адекватные цены. Техподдержка реально работает — написала ночью, ответили утром. Real."</p>
+      <div class="t-author">
+        <div class="t-avatar">EV</div>
+        <div class="t-info"><strong>ELENA V.</strong><span>REGULAR CREW</span><div class="t-verified">✓ VERIFIED PURCHASE</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<div class="section-header">
+  <div class="label">§ 13 — FAQ</div>
+  <h2>Questions<br><span class="stroke">&</span> answers.</h2>
+</div>
+<section class="faq-section">
+  <div class="faq-inner">
+    <div>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);line-height:1.8">// Мы собрали самые частые вопросы. Если не нашёл ответ — пиши на support, ответим в течение часа.</p>
+      <div class="faq-cta">Не нашёл ответ?<br><a href="mailto:buga35006@gmail.com">Написать в support →</a></div>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item"><div class="faq-q"><span>Как вы гарантируете оригинальность?</span><span class="toggle">+</span></div><div class="faq-a">Каждая вещь проходит 4-уровневую проверку: sourcing, dual-expert verification, digital certificate и NFC-метка. Если найдёшь фейк — вернём деньги x2. Работаем с 2020 года, 12K+ верифицированных вещей, 0% фейков.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Куда доставляете?</span><span class="toggle">+</span></div><div class="faq-a">По всему миру! У нас 15 хабов: Москва, СПб, Казань, Екатеринбург, Нью-Йорк, Лос-Анджелес, Лондон, Париж, Берлин, Дубай, Токио, Сеул, Шанхай, Сидней и Сан-Паулу.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Как работает Trade-In?</span><span class="toggle">+</span></div><div class="faq-a">Заполняешь форму → оценка за 10 минут → курьер забирает вещь бесплатно → выкуп в течение 24ч на карту. Либо trade-in: сдаёшь старую вещь с +15% к стоимости на новый item из каталога.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Как подобрать размер онлайн?</span><span class="toggle">+</span></div><div class="faq-a">На каждой карточке товара — реальные замеры этой конкретной вещи + AI fit-предиктор. Введи рост и вес — подберём размер. Также в разделе Sizing Guide есть таблицы по брендам.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Как оформить возврат?</span><span class="toggle">+</span></div><div class="faq-a">14 дней на возврат без вопросов — через маркетплейс (Ozon/WB). Товар должен быть в исходном состоянии, с бирками. Возврат денег в течение 3-5 рабочих дней после получения товара.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOIN THE DROP ============ -->
+<section class="drop-section">
+  <div class="drop-inner">
+    <div class="drop-badge">● EARLY ACCESS</div>
+    <h2>JOIN <span class="stroke">THE</span><br>DROP.</h2>
+    <p>// Подпишись на рассылку — получай уведомления о новых дропах раньше всех. Эксклюзивные цены, early access, приватные распродажи только для crew.</p>
+    <form class="drop-form" onsubmit="subscribeDrop(event)">
+      <input type="email" placeholder="YOUR EMAIL" required>
+      <button type="submit">JOIN →</button>
+    </form>
+    <div class="drop-perks">
+      <span><span class="check">✓</span>Early access</span>
+      <span><span class="check">✓</span>Exclusive drops</span>
+      <span><span class="check">✓</span>-10% first order</span>
+      <span><span class="check">✓</span>No spam</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUPPORT ============ -->
+<section class="support-section" id="support">
+  <div class="support-inner">
+    <div class="support-left">
+      <h2>Need<br>Help<span class="stroke">?</span></h2>
+      <p>// Наша crew работает круглосуточно. Любой вопрос по товарам, заказам, работе магазина — ответим в течение часа. Пиши на почту.</p>
+      <div class="support-meta">
+        <div><span class="key">[STATUS]</span><span>ONLINE 24/7</span></div>
+        <div><span class="key">[REPLY]</span><span>WITHIN 1 HOUR</span></div>
+        <div><span class="key">[LANG]</span><span>RU / EN</span></div>
+        <div><span class="key">[GLOBAL]</span><span>15 HUBS ACTIVE</span></div>
+      </div>
+      <a href="mailto:buga35006@gmail.com" class="support-email">buga35006@gmail.com <span>→</span></a>
+    </div>
+    <div class="support-right">
+      <div class="term-title">[ TERMINAL / SUPPORT ]</div>
+      <div class="term-line"><span class="term-key">SYS.STATUS</span><span class="term-val" style="color:var(--success)">● ONLINE</span></div>
+      <div class="term-line"><span class="term-key">OPERATOR</span><span class="term-val">CREW.MKTPRO</span></div>
+      <div class="term-line"><span class="term-key">AVG.REPLY</span><span class="term-val">00:42:11</span></div>
+      <div class="term-line"><span class="term-key">HOURS</span><span class="term-val">24 / 7 / 365</span></div>
+      <div class="term-line"><span class="term-key">CONTACT</span><span class="term-val">EMAIL</span></div>
+      <div class="term-line"><span class="term-key">MAIL</span><span class="term-val">buga35006@...</span></div>
+      <div class="term-line"><span class="term-key">HUBS</span><span class="term-val">15 GLOBAL</span></div>
+      <div class="term-line"><span class="term-key">LOC</span><span class="term-val" id="terminalCity">MOSCOW.RU</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-big-logo">MKT<br><span class="stroke">PRO</span>®</div>
+      <p>// Authenticated streetwear store. Лимитированные коллекции, 100% оригинал, trade-in, доставка по всему миру через 15 хабов. Crew working 24/7.</p>
+    </div>
+    <div class="footer-col">
+      <h4>[NAV]</h4>
+      <ul>
+        <li><a href="#drops">01 / Drops</a></li>
+        <li><a href="#auth">02 / Auth</a></li>
+        <li><a href="#tradein">03 / Trade-In</a></li>
+        <li><a href="#map">04 / Global Map</a></li>
+        <li><a href="#journal">05 / Journal</a></li>
+        <li><a href="#support">06 / Support</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>[MARKETPLACES]</h4>
+      <ul>
+        <li><a href="https://www.ozon.ru" target="_blank">→ OZON</a></li>
+        <li><a href="https://www.wildberries.ru" target="_blank">→ WILDBERRIES</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>[CONTACT]</h4>
+      <ul>
+        <li><a href="mailto:buga35006@gmail.com">→ EMAIL</a></li>
+        <li><a href="#support">→ SUPPORT 24/7</a></li>
+        <li><a href="#" onclick="openAuthModal();return false">→ JOIN CREW</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 MKTPRO® / ALL RIGHTS RESERVED</div>
+    <div>DESIGNED IN MOSCOW / SHIPPED WORLDWIDE</div>
+  </div>
+</footer>
+<script src="js/script.js"></script>
+</body>
+</html>
